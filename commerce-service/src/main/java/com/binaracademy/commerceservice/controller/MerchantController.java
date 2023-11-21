@@ -1,5 +1,6 @@
 package com.binaracademy.commerceservice.controller;
 
+import com.binaracademy.commerceservice.dto.request.CreateMerchantRequest;
 import com.binaracademy.commerceservice.dto.request.UpdateStatusMerchantRequest;
 import com.binaracademy.commerceservice.dto.response.base.APIResponse;
 import com.binaracademy.commerceservice.dto.response.base.APIResultResponse;
@@ -18,7 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(value = "/v1/merchants", produces = "application/json")
+@RequestMapping(value = "/v1/merchant", produces = "application/json")
 @RequiredArgsConstructor
 @Tag(name = "Merchant", description = "Merchant API")
 public class MerchantController {
@@ -50,5 +51,18 @@ public class MerchantController {
                 merchantResponse
         );
         return new ResponseEntity<>(responseDTO, HttpStatus.OK);
+    }
+
+    @PostMapping("/")
+    @Schema(name = "CreateMerchantRequest", description = "Create merchant request body")
+    @Operation(summary = "Endpoint to handle create new merchant")
+    public ResponseEntity<APIResultResponse<MerchantResponse>> createNewMerchant(@RequestBody @Valid CreateMerchantRequest request) {
+        MerchantResponse merchantResponse = merchantService.createMerchant(request);
+        APIResultResponse<MerchantResponse> responseDTO =  new APIResultResponse<>(
+                HttpStatus.CREATED,
+                "Merchant successfully created",
+                merchantResponse
+        );
+        return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
 }

@@ -1,6 +1,7 @@
 package com.binaracademy.commerceservice.service;
 
 import com.binaracademy.commerceservice.client.UserClient;
+import com.binaracademy.commerceservice.dto.request.CreateMerchantRequest;
 import com.binaracademy.commerceservice.dto.request.UpdateStatusMerchantRequest;
 import com.binaracademy.commerceservice.dto.response.MerchantResponse;
 import com.binaracademy.commerceservice.entity.Merchant;
@@ -57,6 +58,30 @@ public class MerchantServiceImpl implements MerchantService{
         } catch (Exception e) {
             log.error("Failed to get all merchant");
             throw new ServiceBusinessException("Failed to get all merchant");
+        }
+    }
+
+    @Override
+    public MerchantResponse createMerchant(CreateMerchantRequest request) {
+        MerchantResponse merchantResponse;
+        try {
+            log.info("Creating merchant");
+            Merchant merchant = Merchant.builder()
+                    .merchantName(request.getMerchantName())
+                    .merchantLocation(request.getMerchantLocation())
+                    .open(request.getOpen())
+                    .build();
+            merchantRepository.save(merchant);
+            merchantResponse = MerchantResponse.builder()
+                        .merchantName(merchant.getMerchantName())
+                        .merchantLocation(merchant.getMerchantLocation())
+                        .open(merchant.getOpen())
+                        .build();
+            log.info("Merchant {} successfully created", merchantResponse.getMerchantName());
+            return merchantResponse;
+        } catch (Exception e) {
+            log.error("Failed to create merchant");
+            throw new ServiceBusinessException("Failed to create merchant");
         }
     }
 }

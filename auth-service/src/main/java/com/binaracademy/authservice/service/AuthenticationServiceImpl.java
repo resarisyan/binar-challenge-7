@@ -120,6 +120,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         catch (DataConflictException e) {
             throw e;
         } catch (Exception e) {
+            log.error(e.getMessage());
             log.error("Failed to add new merchant");
             throw new ServiceBusinessException("Failed to add new merchant");
         }

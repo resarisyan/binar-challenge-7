@@ -8,10 +8,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 
-@FeignClient(name = "commerce-service", url = "${application.config.commerce-url}")
+@FeignClient(name = "commerce-service", url = "${application.config.commerce-url}/merchant")
 public interface MerchantClient {
-    @GetMapping("/merchant/{merchant-id}")
+    @GetMapping("/merchant-id}")
     List<Merchant> findAllStudentsBySchool(@PathVariable("merchant-id") Integer merchantId);
-    @PostMapping("/merchant")
+    @PostMapping("/")
     Merchant createMerchant(Merchant merchant);
 }
