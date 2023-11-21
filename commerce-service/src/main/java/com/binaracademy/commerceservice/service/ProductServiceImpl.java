@@ -1,13 +1,13 @@
 package com.binaracademy.commerceservice.service;
 
-import com.binaracademy.commerceservice.client.UserClient;
+import com.binaracademy.commerceservice.client.AuthClient;
 import com.binaracademy.commerceservice.dto.request.CreateProductRequest;
 import com.binaracademy.commerceservice.dto.request.UpdateProductReqeust;
 import com.binaracademy.commerceservice.dto.response.MerchantResponse;
 import com.binaracademy.commerceservice.dto.response.ProductResponse;
+import com.binaracademy.commerceservice.dto.response.UserResponse;
 import com.binaracademy.commerceservice.entity.Merchant;
 import com.binaracademy.commerceservice.entity.Product;
-import com.binaracademy.commerceservice.entity.User;
 import com.binaracademy.commerceservice.exception.AccessDeniedException;
 import com.binaracademy.commerceservice.exception.DataNotFoundException;
 import com.binaracademy.commerceservice.exception.ServiceBusinessException;
@@ -27,7 +27,7 @@ import java.util.Optional;
 public class ProductServiceImpl implements ProductService{
     private final ProductRepository productRepository;
     private final MerchantRepository merchantRepository;
-    private final UserClient userClient;
+    private final AuthClient userClient;
     private static final String PRODUCT_NOT_FOUND = "Product not found";
     private static final String MERCHANT_NOT_FOUND = "Merchant not found";
     private static final String ACCESS_DENIED = "You are not allowed to access this product";
@@ -36,7 +36,7 @@ public class ProductServiceImpl implements ProductService{
         ProductResponse productResponse;
         try{
             log.info("Adding new product");
-            User user = userClient.getDetail();
+            UserResponse user = userClient.getDetail();
             Merchant merchant = merchantRepository.findFirstByUsername(user.getUsername())
                     .orElseThrow(() -> new DataNotFoundException(MERCHANT_NOT_FOUND));
             Product product = Product.builder()
@@ -54,8 +54,10 @@ public class ProductServiceImpl implements ProductService{
                             .build())
                     .price(product.getPrice())
                     .build();
+        } catch (AccessDeniedException | DataNotFoundException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Failed to add new product");
+            log.error(e.getMessage());
             throw new ServiceBusinessException("Failed to add new product");
         }
 
@@ -66,7 +68,7 @@ public class ProductServiceImpl implements ProductService{
     public void updateProduct(String productName, UpdateProductReqeust request) {
         try {
             log.info("Updating product");
-            User user = userClient.getDetail();
+            UserResponse user = userClient.getDetail();
             Product existingProduct = productRepository.findByProductName(productName).orElseThrow(() -> new DataNotFoundException(PRODUCT_NOT_FOUND));
             if (!existingProduct.getMerchant().getUsername().equals(user.getUsername())) {
                 throw new AccessDeniedException(ACCESS_DENIED);
@@ -87,7 +89,7 @@ public class ProductServiceImpl implements ProductService{
     public void deleteProduct(String productName) {
         try {
             log.info("Deleting product");
-            User user = userClient.getDetail();
+            UserResponse user = userClient.getDetail();
             Product existingProduct = productRepository.findByProductName(productName).orElseThrow(() -> new DataNotFoundException(PRODUCT_NOT_FOUND));
             if (!existingProduct.getMerchant().getUsername().equals(user.getUsername())) {
                 throw new AccessDeniedException(ACCESS_DENIED);

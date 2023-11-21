@@ -22,18 +22,20 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Order", description = "Order API")
 public class OrderController {
     private final OrderService orderService;
+
     @PostMapping("/")
     @Schema(name = "OrderRequest", description = "Order request body")
     @Operation(summary = "Endpoint to handle order")
-    public ResponseEntity<APIResultResponse<OrderResponse>>  makeOrder(@RequestBody @Valid OrderRequest request) {
+    public ResponseEntity<APIResultResponse<OrderResponse>> makeOrder(@RequestBody @Valid OrderRequest request) {
         OrderResponse orderResponse = orderService.makeOrder(request);
-        APIResultResponse<OrderResponse> responseDTO =  new APIResultResponse<>(
+        APIResultResponse<OrderResponse> responseDTO = new APIResultResponse<>(
                 HttpStatus.OK,
                 "Order successfully created",
                 orderResponse
         );
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
+
     @GetMapping("/")
     @Schema(name = "GetAllOrderRequest", description = "Get all order request body")
     @Operation(summary = "Endpoint to handle get all order")

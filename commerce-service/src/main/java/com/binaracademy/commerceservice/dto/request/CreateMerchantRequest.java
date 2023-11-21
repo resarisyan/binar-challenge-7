@@ -18,4 +18,6 @@ public class CreateMerchantRequest {
     private String merchantLocation;
     @NotNull
     private Boolean open;
+    @NotNull
+    private String username;
 }

@@ -14,14 +14,18 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping(value = "/v1/auth", produces = "application/json")
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "Authentication API")
+@Slf4j
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
@@ -38,15 +42,16 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register/merchant")
-    public ResponseEntity<APIResultResponse<RegisterMerchantResponse>> registerMerchant(@RequestBody @Valid RegisterMerchantRequest request) {
-        RegisterMerchantResponse merchantResponse = authenticationService.registerMerchant(request);
-        APIResultResponse<RegisterMerchantResponse> responseDTO =  new APIResultResponse<>(
-                HttpStatus.CREATED,
-                "Merchant successfully created",
-                merchantResponse
-        );
-        return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
+    public ResponseEntity<CompletableFuture<APIResultResponse<RegisterMerchantResponse>>> registerMerchantAsync(@RequestBody @Valid RegisterMerchantRequest request) {
+        CompletableFuture<APIResultResponse<RegisterMerchantResponse>> responseFuture =
+                authenticationService.registerMerchantAsync(request)
+                        .thenApply(merchantResponse -> new APIResultResponse<>(
+                                HttpStatus.CREATED,
+                                "Merchant successfully created",
+                                merchantResponse));
+        return new ResponseEntity<>(responseFuture, HttpStatus.CREATED);
     }
+
 
     @PostMapping("/login")
     @Hidden
@@ -72,17 +77,12 @@ public class AuthenticationController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<APIResultResponse<UserResponse>> getDetail(HttpServletRequest request) {
+    public ResponseEntity<UserResponse> getDetail() {
         User user = jwtService.getUser();
         UserResponse userResponse = UserResponse.builder()
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .build();
-        APIResultResponse<UserResponse> responseDTO =  new APIResultResponse<>(
-                HttpStatus.OK,
-                "Get detail success",
-                userResponse
-        );
-        return new ResponseEntity<>(responseDTO, HttpStatus.OK);
+        return new ResponseEntity<>(userResponse, HttpStatus.OK);
     }
 }

@@ -10,9 +10,11 @@ import com.binaracademy.authservice.dto.response.RegisterMerchantResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface AuthenticationService {
     RegisterCustomerResponse registerCustomer(RegisterCustomerRequest request);
-    RegisterMerchantResponse registerMerchant(RegisterMerchantRequest request);
+    CompletableFuture<RegisterMerchantResponse> registerMerchantAsync(RegisterMerchantRequest request);
 
     LoginResponse login(LoginRequest request);
     RefreshTokenResponse refreshToken(HttpServletRequest request, HttpServletResponse response);

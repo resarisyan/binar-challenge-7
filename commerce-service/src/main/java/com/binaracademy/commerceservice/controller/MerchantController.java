@@ -56,13 +56,8 @@ public class MerchantController {
     @PostMapping("/")
     @Schema(name = "CreateMerchantRequest", description = "Create merchant request body")
     @Operation(summary = "Endpoint to handle create new merchant")
-    public ResponseEntity<APIResultResponse<MerchantResponse>> createNewMerchant(@RequestBody @Valid CreateMerchantRequest request) {
+    public ResponseEntity<MerchantResponse> createNewMerchant(@RequestBody @Valid CreateMerchantRequest request) {
         MerchantResponse merchantResponse = merchantService.createMerchant(request);
-        APIResultResponse<MerchantResponse> responseDTO =  new APIResultResponse<>(
-                HttpStatus.CREATED,
-                "Merchant successfully created",
-                merchantResponse
-        );
-        return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
+        return new ResponseEntity<>(merchantResponse, HttpStatus.CREATED);
     }
 }

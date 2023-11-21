@@ -1,7 +1,7 @@
 package com.binaracademy.shoppingservice.service;
 
 import com.binaracademy.shoppingservice.client.ProductClient;
-import com.binaracademy.shoppingservice.client.UserClient;
+import com.binaracademy.shoppingservice.client.AuthClient;
 import com.binaracademy.shoppingservice.dto.request.CreateCartRequest;
 import com.binaracademy.shoppingservice.dto.response.CartResponse;
 import com.binaracademy.shoppingservice.dto.response.ProductResponse;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final ProductClient productClient;
-    private final UserClient userClient;
+    private final AuthClient userClient;
     private static final String PRODUCT_NOT_FOUND = "Product not found";
 
     public CartResponse addNewCart(CreateCartRequest cart) {
@@ -31,7 +31,7 @@ public class CartServiceImpl implements CartService {
             Product product = productClient.getProduct(
                     cart.getProductName()).orElseThrow(() -> new DataNotFoundException(PRODUCT_NOT_FOUND)
             );
-            Cart existingCart = cartRepository.findByProductAndUser(product, user);
+            Cart existingCart = cartRepository.findByUsernameAndProduct(user.getUsername(), product);
             if (existingCart != null) {
                 int newQuantity = existingCart.getQuantity() + cart.getQuantity();
                 existingCart.setQuantity(newQuantity);

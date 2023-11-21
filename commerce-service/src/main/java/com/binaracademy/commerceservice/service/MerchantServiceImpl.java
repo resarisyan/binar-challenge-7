@@ -1,9 +1,10 @@
 package com.binaracademy.commerceservice.service;
 
-import com.binaracademy.commerceservice.client.UserClient;
+import com.binaracademy.commerceservice.client.AuthClient;
 import com.binaracademy.commerceservice.dto.request.CreateMerchantRequest;
 import com.binaracademy.commerceservice.dto.request.UpdateStatusMerchantRequest;
 import com.binaracademy.commerceservice.dto.response.MerchantResponse;
+import com.binaracademy.commerceservice.dto.response.UserResponse;
 import com.binaracademy.commerceservice.entity.Merchant;
 import com.binaracademy.commerceservice.entity.User;
 import com.binaracademy.commerceservice.exception.DataNotFoundException;
@@ -22,12 +23,12 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class MerchantServiceImpl implements MerchantService{
     private final MerchantRepository merchantRepository;
-    private final UserClient userClient;
+    private final AuthClient userClient;
     @Override
     public void updateStatusMerchant(UpdateStatusMerchantRequest request) {
         try {
             log.info("Updating merchant");
-            User user = userClient.getDetail();
+            UserResponse user = userClient.getDetail();
             Merchant merchant = merchantRepository.findFirstByUsername(user.getUsername())
                     .orElseThrow(() -> new DataNotFoundException("Merchant not found"));
             merchant.setOpen(request.getOpen());
@@ -69,6 +70,7 @@ public class MerchantServiceImpl implements MerchantService{
             Merchant merchant = Merchant.builder()
                     .merchantName(request.getMerchantName())
                     .merchantLocation(request.getMerchantLocation())
+                    .username(request.getUsername())
                     .open(request.getOpen())
                     .build();
             merchantRepository.save(merchant);

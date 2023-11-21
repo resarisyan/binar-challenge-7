@@ -1,6 +1,6 @@
 package com.binaracademy.shoppingservice.service;
 
-import com.binaracademy.shoppingservice.client.UserClient;
+import com.binaracademy.shoppingservice.client.AuthClient;
 import com.binaracademy.shoppingservice.dto.request.OrderRequest;
 import com.binaracademy.shoppingservice.dto.response.*;
 import com.binaracademy.shoppingservice.entity.*;
@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -24,13 +25,13 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final OrderDetailRepository orderDetailRepository;
-    private final UserClient userClient;
+    private final AuthClient userClient;
 
     @Override
     public OrderResponse makeOrder(OrderRequest request) {
         try {
             User user = userClient.getDetail();
-            List<Cart> carts = cartRepository.findByUser(user);
+            List<Cart> carts = cartRepository.findByUsername(user.getUsername());
             if (carts.isEmpty()) {
                 throw new DataNotFoundException("Cart is empty");
             }
@@ -112,6 +113,14 @@ public class OrderServiceImpl implements OrderService {
             log.error("Failed to get all order");
             throw new ServiceBusinessException("Failed to get all order");
         }
+    }
+
+    @Override
+    public void deleteOrdersOlderThanThreeMonths() {
+        LocalDateTime threeMonthsAgo = LocalDateTime.now().minusMonths(3);
+        Date threeMonthsAgoDate = java.sql.Timestamp.valueOf(threeMonthsAgo);
+
+        orderRepository.deleteByOrderTimeBefore(threeMonthsAgoDate);
     }
 
 }

@@ -7,5 +7,8 @@ import org.springframework.data.domain.Pageable;
 
 public interface OrderService {
     OrderResponse makeOrder(OrderRequest request);
+
     Page<OrderResponse> getAllOrderWithPagination(String username, Pageable pageable);
+
+    void deleteOrdersOlderThanThreeMonths();
 }

@@ -2,14 +2,11 @@ package com.binaracademy.authservice.service;
 
 import com.binaracademy.authservice.client.MerchantClient;
 import com.binaracademy.authservice.config.JwtService;
+import com.binaracademy.authservice.dto.request.CreateMerchantRequest;
 import com.binaracademy.authservice.dto.request.LoginRequest;
 import com.binaracademy.authservice.dto.request.RegisterCustomerRequest;
 import com.binaracademy.authservice.dto.request.RegisterMerchantRequest;
-import com.binaracademy.authservice.dto.response.LoginResponse;
-import com.binaracademy.authservice.dto.response.RefreshTokenResponse;
-import com.binaracademy.authservice.dto.response.RegisterCustomerResponse;
-import com.binaracademy.authservice.dto.response.RegisterMerchantResponse;
-import com.binaracademy.authservice.entity.Merchant;
+import com.binaracademy.authservice.dto.response.*;
 import com.binaracademy.authservice.entity.Token;
 import com.binaracademy.authservice.entity.User;
 import com.binaracademy.authservice.enumeration.EnumRole;
@@ -25,10 +22,13 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 @Service
@@ -88,10 +88,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return customerResponse;
     }
 
+    @Async
     @Transactional
+    public CompletableFuture<RegisterMerchantResponse> registerMerchantAsync(RegisterMerchantRequest request) {
+        try {
+            return CompletableFuture.completedFuture(registerMerchant(request));
+        } catch (ServiceBusinessException e) {
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+
     public RegisterMerchantResponse registerMerchant(RegisterMerchantRequest request) throws ServiceBusinessException {
-        RegisterMerchantResponse merchantResponse;
-        try{
+        RegisterMerchantResponse registerMerchantResponse;
+        MerchantResponse merchantResponse;
+        try {
             log.info("Adding new merchant");
             User user = User.builder()
                     .username(request.getUsername())
@@ -101,32 +111,38 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     .build();
             user = userRepository.save(user);
 
-            Merchant merchant = Merchant.builder()
+            CreateMerchantRequest createMerchantRequest = CreateMerchantRequest.builder()
                     .merchantName(request.getMerchantName())
                     .merchantLocation(request.getMerchantLocation())
                     .open(request.getOpen())
-                    .userId(user.getId())
+                    .username(user.getUsername())
                     .build();
-            merchantClient.createMerchant(merchant);
 
-            merchantResponse = RegisterMerchantResponse.builder()
+            CompletableFuture<MerchantResponse> merchantResponseFuture = CompletableFuture.supplyAsync(() ->
+                    merchantClient.createMerchant(createMerchantRequest));
+
+            merchantResponse = merchantResponseFuture.join(); // Wait for the merchant response
+
+            if (merchantResponse == null) {
+                throw new ServiceBusinessException("Failed to add new merchant");
+            }
+
+            registerMerchantResponse = RegisterMerchantResponse.builder()
                     .username(user.getUsername())
                     .email(user.getEmail())
-                    .merchantName(merchant.getMerchantName())
-                    .merchantLocation(merchant.getMerchantLocation())
-                    .open(merchant.getOpen())
+                    .merchantName(merchantResponse.getMerchantName())
+                    .merchantLocation(merchantResponse.getMerchantLocation())
+                    .open(merchantResponse.getOpen())
                     .build();
-        }
-        catch (DataConflictException e) {
+        } catch (DataConflictException e) {
             throw e;
         } catch (Exception e) {
-            log.error(e.getMessage());
             log.error("Failed to add new merchant");
             throw new ServiceBusinessException("Failed to add new merchant");
         }
 
-        log.info("Merchant {} successfully added", merchantResponse.getUsername());
-        return merchantResponse;
+        log.info("Merchant {} successfully added", registerMerchantResponse.getUsername());
+        return registerMerchantResponse;
     }
 
     public RefreshTokenResponse refreshToken(
